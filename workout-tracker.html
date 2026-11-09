@@ -198,54 +198,33 @@
     .spacer { flex: 1; }
 
     /* ── REST TIMER ── */
-    .timer-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
-      z-index: 100; align-items: flex-end; justify-content: center;
-    }
-    .timer-overlay.open { display: flex; }
-    .timer-sheet {
-      width: 100%; max-width: 480px;
-      background: var(--bg2); border-top: 1px solid var(--border);
-      border-radius: 24px 24px 0 0; padding: 28px 28px 40px;
-      display: flex; flex-direction: column; align-items: center; gap: 20px;
-      animation: slideUp 0.28s cubic-bezier(0.34,1.2,0.64,1);
-    }
+    /* ── REST TIMER BAR ── */
     @keyframes slideUp {
       from { transform: translateY(100%); opacity: 0; }
       to   { transform: translateY(0);    opacity: 1; }
     }
-    .timer-pill { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; }
-    .timer-ring-wrap { position: relative; width: 180px; height: 180px; }
-    .timer-ring { transform: rotate(-90deg); }
-    .timer-ring-bg  { fill: none; stroke: var(--bg3); stroke-width: 8; }
-    .timer-ring-arc {
-      fill: none; stroke: var(--accent); stroke-width: 8;
-      stroke-linecap: round; stroke-dasharray: 502; stroke-dashoffset: 0;
-      transition: stroke-dashoffset 1s linear, stroke 0.4s;
-    }
-    .timer-ring-arc.urgent { stroke: var(--red); }
-    .timer-num {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 52px; font-weight: 800; letter-spacing: -2px;
-    }
-    .timer-adj { display: flex; align-items: center; gap: 20px; }
-    .timer-adj-btn {
-      width: 44px; height: 44px; border-radius: 50%;
-      background: var(--bg3); border: 1px solid var(--border);
-      color: var(--text); font-size: 18px; font-weight: 700;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      touch-action: manipulation;
-    }
-    .timer-adj-label { font-size: 13px; color: var(--muted); min-width: 60px; text-align: center; }
-    .timer-done-msg { font-size: 22px; font-weight: 800; color: var(--green); display: none; animation: popIn 0.3s cubic-bezier(0.34,1.4,0.64,1); }
     @keyframes popIn {
       from { transform: scale(0.6); opacity: 0; }
       to   { transform: scale(1);   opacity: 1; }
     }
-    .timer-skip { background: none; border: none; color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; padding: 12px 16px; touch-action: manipulation; }
-    .timer-skip:hover { color: var(--text); }
+    .timer-bar {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--bg2); border-top: 2px solid var(--accent);
+      padding: 10px 18px 12px; z-index: 100;
+      align-items: center; gap: 12px;
+      transform: translateY(100%);
+      transition: transform 0.25s cubic-bezier(0.34,1.2,0.64,1);
+    }
+    .timer-bar.open { display: flex; transform: translateY(0); }
+    .timer-bar-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+    .timer-bar-track { flex: 1; height: 4px; background: var(--bg3); border-radius: var(--pill); overflow: hidden; }
+    .timer-bar-fill  { height: 100%; background: var(--accent); border-radius: var(--pill); transition: width 1s linear; width: 100%; }
+    .timer-bar-fill.urgent { background: var(--red); }
+    .timer-bar-num  { font-size: 22px; font-weight: 800; letter-spacing: -1px; min-width: 46px; text-align: right; transition: color .3s; }
+    .timer-bar-num.urgent { color: var(--red); }
+    .timer-bar-done { font-size: 15px; font-weight: 800; color: var(--green); display: none; white-space: nowrap; animation: popIn 0.3s cubic-bezier(0.34,1.4,0.64,1); }
+    .timer-bar-skip { background: none; border: none; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; padding: 8px 0 8px 8px; touch-action: manipulation; white-space: nowrap; min-height: 44px; }
+    .timer-bar-skip:hover { color: var(--text); }
 
     /* ── PROGRESS SCREEN ── */
     .prog-day-hdr { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 18px 0 8px; }
@@ -292,7 +271,7 @@
     @supports (padding: env(safe-area-inset-bottom)) {
       .hdr  { padding-top: max(14px, calc(env(safe-area-inset-top) + 14px)); }
       .body { padding-bottom: max(18px, calc(env(safe-area-inset-bottom) + 18px)); }
-      .timer-sheet { padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 40px)); }
+      .timer-bar   { padding-bottom: max(12px, calc(env(safe-area-inset-bottom) + 10px)); }
       .chart-sheet  { padding-bottom: max(44px, calc(env(safe-area-inset-bottom) + 44px)); }
     }
   </style>
@@ -447,25 +426,15 @@
   </div>
 </div>
 
-<!-- ── REST TIMER OVERLAY ── -->
-<div class="timer-overlay" id="timer-overlay" onclick="timerOverlayClick(event)">
-  <div class="timer-sheet">
-    <div class="timer-pill">Rest Timer</div>
-    <div class="timer-ring-wrap">
-      <svg class="timer-ring" width="180" height="180" viewBox="0 0 180 180">
-        <circle class="timer-ring-bg"  cx="90" cy="90" r="80"/>
-        <circle class="timer-ring-arc" cx="90" cy="90" r="80" id="timer-arc"/>
-      </svg>
-      <div class="timer-num" id="timer-num">1:30</div>
-    </div>
-    <div class="timer-done-msg" id="timer-done-msg">Go! 💪</div>
-    <div class="timer-adj">
-      <button class="timer-adj-btn" onclick="adjustTimer(-15)">−15</button>
-      <div class="timer-adj-label" id="timer-default-label">90s default</div>
-      <button class="timer-adj-btn" onclick="adjustTimer(+15)">+15</button>
-    </div>
-    <button class="timer-skip" onclick="stopTimer(true)">Skip rest →</button>
+<!-- ── REST TIMER BAR ── -->
+<div class="timer-bar" id="timer-bar">
+  <div class="timer-bar-label">Rest</div>
+  <div class="timer-bar-track">
+    <div class="timer-bar-fill" id="timer-bar-fill"></div>
   </div>
+  <div class="timer-bar-num" id="timer-bar-num">—</div>
+  <div class="timer-bar-done" id="timer-bar-done">Go!</div>
+  <button class="timer-bar-skip" onclick="stopTimer(true)">Skip →</button>
 </div>
 
 <!-- ── CHART OVERLAY ── -->
@@ -803,6 +772,20 @@ function chooseProg(id) {
 }
 
 // ═══════════════════════════════════════
+// PREVIOUS WEEK CARRY-OVER
+// ═══════════════════════════════════════
+function getPrevWeekExSets(exName, currentWeek) {
+  if (currentWeek <= 1) return null;
+  for (let d = 1; d <= 3; d++) {
+    const log = getLog(currentWeek - 1, d);
+    if (!log || !log.exercises) continue;
+    const ex = log.exercises.find(e => e && e.name === exName);
+    if (ex && ex.sets && ex.sets.length > 0) return ex.sets;
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════
 // DAY VIEW
 // ═══════════════════════════════════════
 function goDay(dayNum) {
@@ -816,10 +799,11 @@ function goDay(dayNum) {
   container.innerHTML = '';
 
   dayData.exercises.forEach((ex, i) => {
-    const saved   = existLog?.exercises?.[i];
-    const prev    = getExProg(ex.n);
-    const numSets = saved ? saved.sets.length : ex.s;
-    const defReps = saved ? (saved.sets[0]?.r ?? ex.r) : ex.r;
+    const saved        = existLog?.exercises?.[i];
+    const prev         = getExProg(ex.n);
+    const prevWeekSets = saved ? null : getPrevWeekExSets(ex.n, VW);
+    const numSets      = saved ? saved.sets.length : (prevWeekSets ? prevWeekSets.length : ex.s);
+    const defReps      = saved ? (saved.sets[0]?.r ?? ex.r) : (prevWeekSets?.[0]?.r ?? ex.r);
 
     const el = document.createElement('div');
     el.className = 'ex-row';
@@ -829,7 +813,7 @@ function goDay(dayNum) {
       ? '<span>' + prev.lastW + P.units + '</span> last · <span class="text-g">' + prev.maxW + P.units + '</span> max'
       : '<span class="text-m">No data yet</span>';
 
-    const setsHtml = buildSetsHtml(i, numSets, defReps, saved, prev?.lastW);
+    const setsHtml = buildSetsHtml(i, numSets, defReps, saved, prev?.lastW, prevWeekSets);
 
     el.innerHTML = `
       <div class="ex-hdr" onclick="toggleEx(${i})">
@@ -863,13 +847,14 @@ function goDay(dayNum) {
   go('s-day');
 }
 
-function buildSetsHtml(exIdx, count, defReps, saved, prevW) {
+function buildSetsHtml(exIdx, count, defReps, saved, prevW, prevWeekSets) {
   let html = '';
   for (let s = 0; s < count; s++) {
     const sd   = saved?.sets?.[s];
-    const reps = sd?.r   ?? defReps;
+    const pws  = prevWeekSets?.[s];          // same set index from last week
+    const reps = sd?.r   ?? pws?.r   ?? defReps;
     const wt   = sd?.w   ?? (prevW ?? '');
-    const rpe  = sd?.rpe ?? '';
+    const rpe  = sd?.rpe ?? pws?.rpe ?? '';  // carry RPE per set from last week
     const done = sd?.done ?? false;
     html += `
       <tr>
@@ -908,8 +893,6 @@ function togChk(btn) {
 // ═══════════════════════════════════════
 // REST TIMER
 // ═══════════════════════════════════════
-const CIRCUMFERENCE = 2 * Math.PI * 80;
-
 let timerTotal    = 60;
 let timerLeft     = 60;
 let timerInterval = null;
@@ -951,12 +934,13 @@ function fmtTime(s) {
 }
 
 function updateTimerUI() {
-  const arc   = document.getElementById('timer-arc');
-  const num   = document.getElementById('timer-num');
+  const fill  = document.getElementById('timer-bar-fill');
+  const num   = document.getElementById('timer-bar-num');
   const ratio = timerLeft / timerTotal;
-  arc.style.strokeDashoffset = CIRCUMFERENCE * (1 - ratio);
-  arc.classList.toggle('urgent', timerLeft <= 10);
+  fill.style.width = (ratio * 100) + '%';
+  fill.classList.toggle('urgent', timerLeft <= 10);
   num.textContent = fmtTime(timerLeft);
+  num.classList.toggle('urgent', timerLeft <= 10);
 }
 
 function startTimer(seconds) {
@@ -965,12 +949,15 @@ function startTimer(seconds) {
   timerLeft  = timerTotal;
   timerDone  = false;
 
-  document.getElementById('timer-done-msg').style.display   = 'none';
-  document.getElementById('timer-num').style.display        = 'flex';
-  document.getElementById('timer-default-label').textContent =
-    timerTotal === 60 ? '60s — compound' : '45s — isolation / core';
-  document.getElementById('timer-arc').classList.remove('urgent');
-  document.getElementById('timer-overlay').classList.add('open');
+  document.getElementById('timer-bar-done').style.display = 'none';
+  document.getElementById('timer-bar-num').style.display  = 'block';
+  document.getElementById('timer-bar-fill').classList.remove('urgent');
+  document.getElementById('timer-bar-num').classList.remove('urgent');
+  document.getElementById('timer-bar').classList.add('open');
+
+  // Push day body up so the last exercise isn't hidden behind the bar
+  const dayBody = document.querySelector('#s-day .body');
+  if (dayBody) dayBody.style.paddingBottom = '72px';
 
   updateTimerUI();
   vibrateDevice(50);
@@ -980,8 +967,8 @@ function startTimer(seconds) {
     updateTimerUI();
     if (timerLeft <= 0) {
       clearInterval(timerInterval); timerInterval = null; timerDone = true;
-      document.getElementById('timer-num').style.display = 'none';
-      document.getElementById('timer-done-msg').style.display = 'block';
+      document.getElementById('timer-bar-num').style.display  = 'none';
+      document.getElementById('timer-bar-done').style.display = 'block';
       playFinishSound();
       vibrateDevice([200, 100, 200]);
       setTimeout(() => stopTimer(false), 2500);
@@ -991,18 +978,9 @@ function startTimer(seconds) {
 
 function stopTimer(manual) {
   clearInterval(timerInterval); timerInterval = null;
-  document.getElementById('timer-overlay').classList.remove('open');
-}
-
-function adjustTimer(delta) {
-  timerLeft  = Math.max(5, timerLeft + delta);
-  timerTotal = Math.max(5, timerTotal + delta);
-  document.getElementById('timer-default-label').textContent = timerTotal + 's';
-  updateTimerUI();
-}
-
-function timerOverlayClick(e) {
-  if (e.target === document.getElementById('timer-overlay')) stopTimer(true);
+  document.getElementById('timer-bar').classList.remove('open');
+  const dayBody = document.querySelector('#s-day .body');
+  if (dayBody) dayBody.style.paddingBottom = '';
 }
 
 // ═══════════════════════════════════════
